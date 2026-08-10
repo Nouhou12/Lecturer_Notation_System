@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Lecturer Notation</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header class="app-header">
+        <h1>Admin — Notes</h1>
+        <nav class="top-nav">
+            <a href="home.html">Home</a>
+            <a href="index.html">Add Note</a>
+            <a href="login.html">Login</a>
+        </nav>
+    </header>
+
+    <main class="app-main">
+        <section class="admin-card">
+            <h2>Submitted Notes</h2>
+            <p id="adminMessage" class="auth-message"></p>
+            <div id="notesContainer"></div>
+            <div class="admin-actions">
+                <button id="refreshBtn">Refresh</button>
+                <button id="clearBtn">Clear Local Notes</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; Rousseau University Institute - Learn, Create and Innovate</p>
+    </footer>
+
+    <script type="module">
+        import { auth, db } from './firebase-config.js';
+        import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+        import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+
+        const msg = document.getElementById('adminMessage');
+        const container = document.getElementById('notesContainer');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        function showMessage(text, type) {
+            msg.textContent = text || '';
+            msg.className = 'auth-message ' + (type || '');
+        }
+
+        function currentUserIsAdmin(user) {
+            if (!user || !user.email) return false;
+            const email = (user.email || '').toLowerCase();
+            return email === 'admin@rui.com' || email.endsWith('@rui.com');
+        }
+
+        async function loadNotesFromFirestore() {
+            const q = query(collection(db, 'lecturerNotes'), orderBy('createdAt', 'desc'));
+            const snap = await getDocs(q);
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+
+        function renderNotes(notes) {
+            container.innerHTML = '';
+            if (!notes || notes.length === 0) {
+                container.innerHTML = '<p class="empty-state">No notes found.</p>';
+                return;
+            }
+
+            notes.forEach((n) => {
+                const article = document.createElement('article');
+                article.className = 'note-item';
+                const created = n.createdAt ? new Date(n.createdAt.seconds ? n.createdAt.seconds * 1000 : n.createdAt).toLocaleString() : '';
+                article.innerHTML = `
+                    <strong>${n.course || ''}</strong>
+                    <div class="note-rating">${'★'.repeat(n.rating || 0)}${'☆'.repeat(5 - (n.rating || 0))}</div>
+                    <div><em>Student:</em> ${n.student || ''}</div>
+                    <div class="note-meta">${created}</div>
+                    <p>${n.note || ''}</p>
+                `;
+                container.appendChild(article);
+            });
+        }
+
+        async function initForUser(user) {
+            if (!currentUserIsAdmin(user)) {
+                showMessage('Admin access required. Redirecting to login...', 'error');
+                setTimeout(() => window.location.href = 'login.html', 900);
+                return;
+            }
+
+            try {
+                const notes = await loadNotesFromFirestore();
+                renderNotes(notes);
+                showMessage('Showing Firestore notes.', 'success');
+            } catch (err) {
+                showMessage('Error loading notes: ' + (err.message || err), 'error');
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) initForUser(user);
+            else {
+                showMessage('Not signed in. Redirecting to login...', 'error');
+                setTimeout(() => window.location.href = 'login.html', 700);
+            }
+        });
+
+        refreshBtn.addEventListener('click', async () => {
+            const notes = await loadNotesFromFirestore();
+            renderNotes(notes);
+            showMessage('Refreshed.', 'success');
+        });
+
+        clearBtn.addEventListener('click', () => {
+            // Clearing actual Firestore documents requires proper security rules and deletion code.
+            // For safety we only show guidance here.
+            if (!confirm('Clearing Firestore documents requires admin privileges and cannot be undone here. Continue?')) return;
+            showMessage('To clear notes, implement a secure server-side cleanup or use the Firebase console.', 'error');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="/RUI.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman:wght@400..900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <h1 class="title">Login</h1>
+    <form id="loginForm" class="login">
+        <div class="login-form">
+            <p>Email</p>
+            <input id="loginEmail" type="email" name="email" placeholder="Enter your email" class="email" required>
+        </div>
+        <div class="login-form">
+            <p>Password</p>
+            <input id="loginPassword" type="password" name="password" placeholder="Enter your password" class="password"
+                required>
+        </div>
+        <button type="submit">Login</button>
+        <p id="loginMessage" class="auth-message"></p>
+    </form>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { onAuthStateChanged, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const loginForm = document.getElementById("loginForm");
+            const loginMessage = document.getElementById("loginMessage");
+
+            function showMessage(el, msg, type) {
+                el.textContent = msg;
+                el.className = "auth-message " + (type || "");
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (!user) return;
+
+                localStorage.setItem("currentUser", user.email || "");
+                const userEmail = (user.email || "").toLowerCase();
+                const isAdmin = userEmail === "admin@rui.com" || userEmail.endsWith("@rui.com");
+                window.location.href = isAdmin ? "admin.html" : "home.html";
+            });
+
+            loginForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+                const password = document.getElementById("loginPassword").value;
+
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        localStorage.setItem("currentUser", userCredential.user.email || "");
+                        showMessage(loginMessage, "Login successful. Redirecting...", "success");
+                        const userEmail = (userCredential.user.email || "").toLowerCase();
+                        const isAdmin = userEmail === "admin@rui.com" || userEmail.endsWith("@rui.com");
+                        setTimeout(() => window.location.href = isAdmin ? "admin.html" : "home.html", 500);
+                    })
+                    .catch((error) => {
+                        showMessage(loginMessage, error.message || 'Login failed', 'error');
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>

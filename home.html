@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lecturer Notation PWA</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0b3d91" />
+</head>
+<body>
+    <header class="app-header">
+        <h1 id="appTitle">Lecturer Notation</h1>
+        <p id="welcomeText">Capture student notes and feedback from any device.</p>
+        <nav class="top-nav">
+            <a href="index.html">Add Note</a>
+            <a href="login.html">Login</a>
+            <a href="signup.html">Signup</a>
+            <button id="logoutBtn" class="logout-btn" style="display:none;">Logout</button>
+        </nav>
+    </header>
+
+    <main class="app-main">
+        <section class="welcome-card">
+            <h2 id="welcomeName">Welcome</h2>
+            <p id="welcomeDesc">View your notes or add a new one.</p>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; Rousseau University Institute - Learn, Create and Innovate</p>
+    </footer>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const welcomeName = document.getElementById('welcomeName');
+        const welcomeDesc = document.getElementById('welcomeDesc');
+
+        function updateWelcome(user) {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const email = user.email || '';
+            localStorage.setItem('currentUser', email);
+            const displayName = user.displayName || email.split('@')[0] || 'User';
+            welcomeName.textContent = 'Welcome, ' + displayName;
+            welcomeDesc.textContent = 'You are signed in as ' + email;
+            logoutBtn.style.display = 'inline-block';
+        }
+
+        logoutBtn.addEventListener('click', async function () {
+            try {
+                await signOut(auth);
+            } finally {
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            }
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            updateWelcome(user);
+        });
+    </script>
+</body>
+</html>

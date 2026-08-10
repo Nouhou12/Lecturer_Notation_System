@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="/RUI.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman:wght@400..900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <h1 class="title">Signup</h1>
+    <form id="signupForm" class="login">
+        <input type="hidden" name="signUp" value="1">
+        <div class="login-form">
+            <p>First Name</p>
+            <input id="firstName" type="text" name="fName" placeholder="Enter your first name" class="email" required>
+        </div>
+        <div class="login-form">
+            <p>Last Name</p>
+            <input id="lastName" type="text" name="lName" placeholder="Enter your last name" class="email" required>
+        </div>
+        <div class="login-form">
+            <p>Email</p>
+            <input id="signupEmail" type="email" name="email" placeholder="Enter your email" class="email" required>
+        </div>
+        <div class="login-form">
+            <p>Password</p>
+            <input id="signupPassword" type="password" name="password" placeholder="Enter your password" class="password" required>
+        </div>
+        <div class="login-form">
+            <p>Confirm Password</p>
+            <input id="confirmPassword" type="password" name="confirmPassword" placeholder="Confirm your password" class="password" required>
+        </div>
+        <button type="submit">Signup</button>
+        <p id="signupMessage" class="auth-message"></p>
+    </form>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { onAuthStateChanged, createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const signupForm = document.getElementById("signupForm");
+            const signupMessage = document.getElementById("signupMessage");
+
+            function showMessage(el, msg, type) {
+                el.textContent = msg;
+                el.className = "auth-message " + (type || "");
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (!user) return;
+
+                localStorage.setItem("currentUser", user.email || "");
+                window.location.href = "home.html";
+            });
+
+            signupForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                const firstName = document.getElementById("firstName").value.trim();
+                const lastName = document.getElementById("lastName").value.trim();
+                const email = document.getElementById("signupEmail").value.trim().toLowerCase();
+                const password = document.getElementById("signupPassword").value;
+                const confirmPassword = document.getElementById("confirmPassword").value;
+
+                if (password !== confirmPassword) {
+                    showMessage(signupMessage, "Passwords do not match.", "error");
+                    return;
+                }
+
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        const displayName = firstName + (lastName ? " " + lastName : "");
+                        return updateProfile(userCredential.user, { displayName }).then(() => {
+                            localStorage.setItem("currentUser", email);
+                            showMessage(signupMessage, "Account created successfully. Redirecting...", "success");
+                            setTimeout(() => window.location.href = "home.html", 700);
+                        });
+                    })
+                    .catch((error) => {
+                        showMessage(signupMessage, error.message || 'Signup failed', 'error');
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>
