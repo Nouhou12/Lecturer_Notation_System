@@ -1,28 +1,20 @@
 /* ==========================================================================
-   1. GLOBAL VARIABLES & RESET
+   1. GLOBAL VARIABLES & BASE LAYOUT
    ========================================================================== */
 :root {
   --primary: #5d081f;
   --primary-dark: #450415;
-  --bg-light: #ffffff;
   --bg-surface: #f7f6f6;
   --text-main: #111827;
   --text-muted: #4b5563;
-  --border-color: #5d081f;
   --border-light: #e5e7eb;
   --accent-gold: #f59e0b;
-  --radius-lg: 12px;
-  --radius-md: 8px;
 }
 
-*, *::before, *::after {
+* {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-html, body {
-  min-height: 100vh;
 }
 
 body {
@@ -30,146 +22,234 @@ body {
   background-color: var(--bg-surface);
   color: var(--text-main);
   line-height: 1.5;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 /* ==========================================================================
-   2. HEADER & NAVIGATION
+   2. TOP HEADER BANNER (HOME.HTML & APP HEADERS)
    ========================================================================== */
-header, .app-header {
+header, .app-header, .home-header, .header {
   width: 100%;
   background-color: var(--primary);
   color: #ffffff;
-  padding: 16px 20px;
+  padding: 28px 20px;
   text-align: center;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.app-header h1 {
-  font-size: 1.3rem;
-  margin-bottom: 4px;
+header h1, .app-header h1, .home-header h1, .header h1 {
+  color: #ffffff !important;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 6px;
 }
 
-.app-header p {
-  font-size: 0.9rem;
-  opacity: 0.9;
+header p, .app-header p, .home-header p, .header p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  margin-bottom: 16px;
 }
 
-.top-nav {
-  margin-top: 12px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.top-nav a {
-  color: #ffffff;
+header a, .app-header a, .home-header a, .top-nav a, .home-buttons a {
+  display: inline-block;
+  color: #ffffff !important;
   text-decoration: none;
-  padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 8px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 6px;
   font-weight: 600;
-  font-size: 0.85rem;
-  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+  margin: 4px;
+  transition: all 0.2s ease;
 }
 
-.top-nav a:hover {
-  background: rgba(255, 255, 255, 0.2);
+header a:hover, .app-header a:hover, .home-header a:hover, .top-nav a:hover, .home-buttons a:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: #ffffff;
 }
 
 /* ==========================================================================
-   3. APP CONTAINER & CARDS
+   3. MAIN CONTENT CONTAINER & CARDS
    ========================================================================== */
-.app-main {
+main, .app-main {
   width: 100%;
   max-width: 800px;
-  margin: 24px auto;
+  margin: 0 auto;
   padding: 0 16px;
   flex: 1;
 }
 
-.form-card, .notes-card, .admin-card, .welcome-card {
+.welcome-card, .form-card, .notes-card, .admin-card {
   background: #ffffff;
-  padding: 24px;
+  padding: 28px;
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  width: 100%;
 }
 
-.form-card h2, .notes-card h2, .admin-card h2 {
+.welcome-card h2, .form-card h2, .notes-card h2 {
   color: var(--primary);
   margin-bottom: 16px;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   padding-bottom: 8px;
   border-bottom: 2px solid var(--bg-surface);
 }
 
+.welcome-card p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
 /* ==========================================================================
-   4. FORM CONTROLS & INPUTS
+   4. LOGIN & SIGNUP PAGES (TEAMMATE COMPATIBILITY)
    ========================================================================== */
-.form_container, #note-form, .login-form {
+.title {
+  display: block;
+  font-size: 32px;
+  text-align: center;
+  color: var(--primary);
+  margin: 40px auto 20px auto;
+}
+
+form.login, .login {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 15px;
+  padding: 10px;
+}
+
+.login-form {
+  position: relative;
+  background-color: #eeeeee;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-form p {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #000000;
+  font-family: monospace;
+}
+
+.login-form input {
+  border: none !important;
+  background: transparent !important;
+  margin-top: 5px;
+  padding: 0 !important;
+  font-size: 16px;
+  outline: none !important;
+  box-shadow: none !important;
+  width: 100%;
+  color: #000000;
+}
+
+.login button, form.login button {
+  width: 100%;
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.login button:hover, form.login button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* ==========================================================================
+   5. EVALUATION FORM & RATING SYSTEM (INDEX.HTML)
+   ========================================================================== */
+/* ==========================================================================
+   5. EVALUATION FORM & RATING SYSTEM (INDEX.HTML)
+   ========================================================================== */
+#note-form, form.evaluation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   width: 100%;
 }
 
-label {
+#note-form label, form.evaluation-form label {
   display: flex;
   flex-direction: column;
   gap: 6px;
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-main);
+  width: 100%;
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-select,
-textarea {
+#note-form input[type="text"],
+#note-form select,
+#note-form textarea,
+form.evaluation-form input[type="text"],
+form.evaluation-form select,
+form.evaluation-form textarea {
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 14px;
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   font-size: 0.95rem;
   font-family: inherit;
   background-color: #ffffff;
+  display: block;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-input:focus, select:focus, textarea:focus {
+#note-form input:focus, 
+#note-form select:focus, 
+#note-form textarea:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(93, 8, 31, 0.1);
+  box-shadow: 0 0 0 3px rgba(93, 8, 31, 0.12);
 }
 
-textarea {
-  min-height: 100px;
+#note-form textarea, form.evaluation-form textarea {
+  min-height: 110px;
   resize: vertical;
 }
 
-/* ==========================================================================
-   5. RATING SYSTEM & BUTTONS
-   ========================================================================== */
+/* Star Rating Controls & Glow Effect */
+.evaluation-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 6px 0;
+}
+
 .rating-fieldset {
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
+  border-radius: 8px;
+  padding: 14px 18px;
   background-color: var(--bg-surface);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .rating-fieldset legend {
-  font-weight: 600;
-  font-size: 0.88rem;
+  font-weight: 700;
+  font-size: 0.95rem;
   color: var(--primary);
   padding: 0 6px;
 }
@@ -177,39 +257,57 @@ textarea {
 .rating-group {
   display: inline-flex;
   flex-direction: row-reverse;
-  gap: 4px;
+  gap: 6px;
 }
 
+/* Hide default radio buttons securely without breaking click detection */
 .rating-group input[type="radio"] {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
+/* Star default state (dim grey) */
 .rating-group label {
-  font-size: 1.5rem;
-  color: #d1d5db;
+  font-size: 2rem;
+  color: #cbd5e1;
   cursor: pointer;
-  transition: color 0.15s ease;
+  line-height: 1;
+  user-select: none;
+  transition: color 0.15s ease, text-shadow 0.15s ease, transform 0.1s ease;
 }
 
+/* Shining Gold State (Hover & Active Selection) */
 .rating-group label:hover,
 .rating-group label:hover ~ label,
-.rating-group input[type="radio"]:checked ~ label {
-  color: var(--accent-gold);
+.rating-group input[type="radio"]:checked ~ label,
+.rating-group label:has(input:checked),
+.rating-group label:has(input:checked) ~ label {
+  color: #f59e0b !important;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
 }
 
-button, .btn {
+.rating-group label:hover {
+  transform: scale(1.2);
+}
+
+#note-form button[type="submit"], form.evaluation-form button[type="submit"] {
+  width: 100%;
   background-color: var(--primary);
   color: #ffffff;
-  padding: 12px 18px;
-  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  border-radius: 8px;
   border: none;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  margin-top: 8px;
 }
 
-button:hover, .btn:hover {
+#note-form button[type="submit"]:hover, form.evaluation-form button[type="submit"]:hover {
   background-color: var(--primary-dark);
 }
 
@@ -221,11 +319,11 @@ button:hover, .btn:hover {
   text-align: center;
   padding: 8px;
 }
-
 .auth-message.success { color: #059669; }
 .auth-message.error { color: #dc2626; }
 
-.site-footer {
+footer, .site-footer {
+  width: 100%;
   background-color: var(--primary);
   color: #ffffff;
   text-align: center;
