@@ -1,75 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lecturer Notation PWA</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#0b3d91" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecturer Notation PWA</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b3d91" />
 </head>
 <body>
-    <main class="app-main">
-        <section class="form-card">
-            <h2>Add a Note</h2>
-            <form id="note-form" class="form_container">
-                <label>
-                    Course
-                    <select id="course" required>
-                        <option value="" disabled selected>Select a course</option>
-                        <option value="Mathematics">Mathematics</option>
-                        <option value="Physics">Physics</option>
-                        <option value="Chemistry">Chemistry</option>
-                        <option value="Computer Science">Computer Science</option>
-                        <option value="Biology">Biology</option>
-                        <option value="History">History</option>
-                    </select>
-                </label>
+  <main class="app-main">
+    <section class="form-card">
+      <h2>Evaluate a Lecturer</h2>
+      <form id="note-form" class="form_container">
+        
+        <!-- Course Selection -->
+        <label for="course">
+          Course
+          <select id="course" name="course" required>
+            <option value="" disabled selected>Select a course</option>
+            <option value="Mathematics">Mathematics</option>
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Biology">Biology</option>
+            <option value="History">History</option>
+          </select>
+        </label>
 
-                <label>
-                    Student
-                    <input id="student" type="text" placeholder="Student name" required />
-                </label>
+        <!-- Lecturer Name -->
+        <label for="lecturer">
+          Lecturer Name
+          <input id="lecturer" name="lecturer" type="text" placeholder="e.g., Dr. Smith" required />
+        </label>
 
-                <label class="rating-label">
-                    Note rating
-                    <div class="rating-group" id="rating-group">
-                        <input type="radio" name="rating" id="rating-1" value="1" required />
-                        <label for="rating-1" title="1 star">★</label>
+        <!-- Student Identification (Optional or Required depending on privacy) -->
+        <label for="student">
+          Student Name / ID
+          <input id="student" name="student" type="text" placeholder="Your name or matricule" required />
+        </label>
 
-                        <input type="radio" name="rating" id="rating-2" value="2" />
-                        <label for="rating-2" title="2 stars">★</label>
+        <!-- MULTI-CRITERIA RATING SECTION -->
+        <div class="evaluation-grid">
 
-                        <input type="radio" name="rating" id="rating-3" value="3" />
-                        <label for="rating-3" title="3 stars">★</label>
+          <!-- 1. Teaching & Pedagogy -->
+          <fieldset class="rating-fieldset">
+            <legend>Teaching Clarity & Pedagogy</legend>
+            <div class="rating-group">
+              <input type="radio" name="rating_clarity" id="clarity-5" value="5" required />
+              <label for="clarity-5" title="5 stars">★</label>
+              <input type="radio" name="rating_clarity" id="clarity-4" value="4" />
+              <label for="clarity-4" title="4 stars">★</label>
+              <input type="radio" name="rating_clarity" id="clarity-3" value="3" />
+              <label for="clarity-3" title="3 stars">★</label>
+              <input type="radio" name="rating_clarity" id="clarity-2" value="2" />
+              <label for="clarity-2" title="2 stars">★</label>
+              <input type="radio" name="rating_clarity" id="clarity-1" value="1" />
+              <label for="clarity-1" title="1 star">★</label>
+            </div>
+          </fieldset>
 
-                        <input type="radio" name="rating" id="rating-4" value="4" />
-                        <label for="rating-4" title="4 stars">★</label>
+          <!-- 2. Behavior & Professionalism -->
+          <fieldset class="rating-fieldset">
+            <legend>Behavior & Professionalism</legend>
+            <div class="rating-group">
+              <input type="radio" name="rating_behavior" id="behavior-5" value="5" required />
+              <label for="behavior-5" title="5 stars">★</label>
+              <input type="radio" name="rating_behavior" id="behavior-4" value="4" />
+              <label for="behavior-4" title="4 stars">★</label>
+              <input type="radio" name="rating_behavior" id="behavior-3" value="3" />
+              <label for="behavior-3" title="3 stars">★</label>
+              <input type="radio" name="rating_behavior" id="behavior-2" value="2" />
+              <label for="behavior-2" title="2 stars">★</label>
+              <input type="radio" name="rating_behavior" id="behavior-1" value="1" />
+              <label for="behavior-1" title="1 star">★</label>
+            </div>
+          </fieldset>
 
-                        <input type="radio" name="rating" id="rating-5" value="5" />
-                        <label for="rating-5" title="5 stars">★</label>
-                    </div>
-                </label>
+          <!-- 3. Punctuality & Availability -->
+          <fieldset class="rating-fieldset">
+            <legend>Punctuality & Availability</legend>
+            <div class="rating-group">
+              <input type="radio" name="rating_punctuality" id="punctuality-5" value="5" required />
+              <label for="punctuality-5" title="5 stars">★</label>
+              <input type="radio" name="rating_punctuality" id="punctuality-4" value="4" />
+              <label for="punctuality-4" title="4 stars">★</label>
+              <input type="radio" name="rating_punctuality" id="punctuality-3" value="3" />
+              <label for="punctuality-3" title="3 stars">★</label>
+              <input type="radio" name="rating_punctuality" id="punctuality-2" value="2" />
+              <label for="punctuality-2" title="2 stars">★</label>
+              <input type="radio" name="rating_punctuality" id="punctuality-1" value="1" />
+              <label for="punctuality-1" title="1 star">★</label>
+            </div>
+          </fieldset>
 
-                <label>
-                    Note
-                    <textarea id="note" placeholder="Note details" rows="4"></textarea>
-                </label>
-                <button type="submit">Submit the note</button>
-            </form>
-        </section>
+          <!-- 4. Course Organization -->
+          <fieldset class="rating-fieldset">
+            <legend>Course Material & Organization</legend>
+            <div class="rating-group">
+              <input type="radio" name="rating_materials" id="materials-5" value="5" required />
+              <label for="materials-5" title="5 stars">★</label>
+              <input type="radio" name="rating_materials" id="materials-4" value="4" />
+              <label for="materials-4" title="4 stars">★</label>
+              <input type="radio" name="rating_materials" id="materials-3" value="3" />
+              <label for="materials-3" title="3 stars">★</label>
+              <input type="radio" name="rating_materials" id="materials-2" value="2" />
+              <label for="materials-2" title="2 stars">★</label>
+              <input type="radio" name="rating_materials" id="materials-1" value="1" />
+              <label for="materials-1" title="1 star">★</label>
+            </div>
+          </fieldset>
 
-        <section class="notes-card">
-            <h2>Recent Notes</h2>
-            <div id="notes-list"></div>
-        </section>
+        </div>
 
-    </main>
+        <!-- Detailed Feedback -->
+        <label for="note">
+          Detailed Comments / Recommendations
+          <textarea id="note" name="note" placeholder="Provide constructive feedback or specific details..." rows="4"></textarea>
+        </label>
 
-    <footer class="site-footer">
-        <p>&copy; Rousseau University Institute - Learn, Create and Innovate</p>
-    </footer>
+        <button type="submit">Submit Evaluation</button>
+      </form>
+    </section>
 
-    <script type="module" src="app.js"></script>
+    <section class="notes-card">
+      <h2>Recent Evaluations</h2>
+      <div id="notes-list"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; Rousseau University Institute - Learn, Create and Innovate</p>
+  </footer>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
