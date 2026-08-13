@@ -3,28 +3,56 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin - Lecturer Notation</title>
+    <title>Admin Dashboard - Lecturer Notation</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <header class="app-header">
-        <h1>Admin — Notes</h1>
+        <h1>Admin Analytics & Notes</h1>
+        <p>Lecturer evaluation averages and student feedback overview.</p>
         <nav class="top-nav">
             <a href="home.html">Home</a>
-            <a href="index.html">Add Note</a>
+            <a href="index.html">Add Evaluation</a>
             <a href="login.html">Login</a>
         </nav>
     </header>
 
     <main class="app-main">
-        <section class="admin-card">
-            <h2>Submitted Notes</h2>
-            <p id="adminMessage" class="auth-message"></p>
-            <div id="notesContainer"></div>
-            <div class="admin-actions">
-                <button id="refreshBtn">Refresh</button>
-                <button id="clearBtn">Clear Local Notes</button>
+        <!-- Top Key Performance Indicators -->
+        <section class="admin-stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Total Submissions</span>
+                <span class="stat-value" id="totalSubmissions">0</span>
             </div>
+            <div class="stat-card">
+                <span class="stat-label">Lecturers Evaluated</span>
+                <span class="stat-value" id="totalLecturers">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">System Average</span>
+                <span class="stat-value accent" id="systemAverage">0.0 ★</span>
+            </div>
+        </section>
+
+        <!-- Lecturer Aggregated Ratings Section -->
+        <section class="admin-card">
+            <h2>Lecturer Performance & Averages</h2>
+            <div id="analyticsContainer" class="analytics-grid">
+                <!-- Dynamically populated lecturer scorecards -->
+            </div>
+        </section>
+
+        <!-- Raw Notes Stream -->
+        <section class="admin-card">
+            <div class="section-header-inline">
+                <h2>All Student Feedback</h2>
+                <div class="admin-actions">
+                    <button id="refreshBtn" class="btn-secondary">Refresh</button>
+                    <button id="clearBtn" class="btn-outline">Clear Local Notes</button>
+                </div>
+            </div>
+            <p id="adminMessage" class="auth-message"></p>
+            <div id="notesContainer" class="notes-feed"></div>
         </section>
     </main>
 
@@ -34,13 +62,19 @@
 
     <script type="module">
         import { auth, db } from './firebase-config.js';
-        import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
         import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
 
         const msg = document.getElementById('adminMessage');
         const container = document.getElementById('notesContainer');
+        const analyticsContainer = document.getElementById('analyticsContainer');
         const refreshBtn = document.getElementById('refreshBtn');
         const clearBtn = document.getElementById('clearBtn');
+
+        // Stats Elements
+        const totalSubmissionsEl = document.getElementById('totalSubmissions');
+        const totalLecturersEl = document.getElementById('totalLecturers');
+        const systemAverageEl = document.getElementById('systemAverage');
 
         function showMessage(text, type) {
             msg.textContent = text || '';
@@ -59,23 +93,148 @@
             return snap.docs.map(d => ({ id: d.id, ...d.data() }));
         }
 
-        function renderNotes(notes) {
-            container.innerHTML = '';
+        // Generate Aggregate Analytics by Lecturer
+        function computeLecturerAnalytics(notes) {
+            const stats = {};
+
+            notes.forEach(n => {
+                const lecturer = n.lecturer || n.lecturerName || 'Unassigned Lecturer';
+                const course = n.course || 'General Subject';
+
+                if (!stats[lecturer]) {
+                    stats[lecturer] = {
+                        lecturerName: lecturer,
+                        course: course,
+                        count: 0,
+                        totalOverall: 0,
+                        claritySum: 0,
+                        behaviorSum: 0,
+                        punctualitySum: 0,
+                        materialSum: 0,
+                        hasCriteria: false
+                    };
+                }
+
+                const item = stats[lecturer];
+                item.count++;
+
+                // Overall score calculation
+                const overall = n.rating || n.overallRating || 0;
+                item.totalOverall += Number(overall);
+
+                // Multi-criteria parsing (if submitted via structured form)
+                const clarity = n.clarity || (n.ratings && n.ratings.clarity) || 0;
+                const behavior = n.behavior || (n.ratings && n.ratings.behavior) || 0;
+                const punctuality = n.punctuality || (n.ratings && n.ratings.punctuality) || 0;
+                const material = n.material || (n.ratings && n.ratings.material) || 0;
+
+                if (clarity || behavior || punctuality || material) {
+                    item.hasCriteria = true;
+                    item.claritySum += Number(clarity);
+                    item.behaviorSum += Number(behavior);
+                    item.punctualitySum += Number(punctuality);
+                    item.materialSum += Number(material);
+                }
+            });
+
+            return Object.values(stats).map(s => ({
+                ...s,
+                avgOverall: (s.totalOverall / s.count).toFixed(1),
+                avgClarity: s.hasCriteria ? (s.claritySum / s.count).toFixed(1) : null,
+                avgBehavior: s.hasCriteria ? (s.behaviorSum / s.count).toFixed(1) : null,
+                avgPunctuality: s.hasCriteria ? (s.punctualitySum / s.count).toFixed(1) : null,
+                avgMaterial: s.hasCriteria ? (s.materialSum / s.count).toFixed(1) : null
+            }));
+        }
+
+        function renderDashboard(notes) {
             if (!notes || notes.length === 0) {
+                totalSubmissionsEl.textContent = '0';
+                totalLecturersEl.textContent = '0';
+                systemAverageEl.textContent = '0.0 ★';
+                analyticsContainer.innerHTML = '<p class="empty-state">No evaluations collected yet.</p>';
                 container.innerHTML = '<p class="empty-state">No notes found.</p>';
                 return;
             }
 
+            const lecturerStats = computeLecturerAnalytics(notes);
+
+            // 1. Render Top KPI Metrics
+            totalSubmissionsEl.textContent = notes.length;
+            totalLecturersEl.textContent = lecturerStats.length;
+            const grandTotal = lecturerStats.reduce((acc, curr) => acc + Number(curr.avgOverall), 0);
+            systemAverageEl.textContent = `${(grandTotal / lecturerStats.length).toFixed(1)} / 5 ★`;
+
+            // 2. Render Lecturer Scorecards
+            analyticsContainer.innerHTML = '';
+            lecturerStats.forEach(stat => {
+                const card = document.createElement('div');
+                card.className = 'lecturer-analytics-card';
+
+                let criteriaHTML = '';
+                if (stat.hasCriteria) {
+                    criteriaHTML = `
+                        <div class="criteria-breakdown">
+                            <div class="criteria-item">
+                                <span>Clarity & Pedagogy</span>
+                                <strong>${stat.avgClarity} / 5</strong>
+                            </div>
+                            <div class="criteria-item">
+                                <span>Professionalism</span>
+                                <strong>${stat.avgBehavior} / 5</strong>
+                            </div>
+                            <div class="criteria-item">
+                                <span>Punctuality</span>
+                                <strong>${stat.avgPunctuality} / 5</strong>
+                            </div>
+                            <div class="criteria-item">
+                                <span>Course Material</span>
+                                <strong>${stat.avgMaterial} / 5</strong>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="card-header-flex">
+                        <div>
+                            <h3 class="lecturer-title">${stat.lecturerName}</h3>
+                            <span class="course-badge">${stat.course}</span>
+                        </div>
+                        <div class="score-badge">
+                            <span class="score-num">${stat.avgOverall}</span>
+                            <span class="score-star">★</span>
+                        </div>
+                    </div>
+                    ${criteriaHTML}
+                    <div class="card-footer-meta">
+                        Based on ${stat.count} student evaluation${stat.count > 1 ? 's' : ''}
+                    </div>
+                `;
+                analyticsContainer.appendChild(card);
+            });
+
+            // 3. Render Individual Notes Feed
+            container.innerHTML = '';
             notes.forEach((n) => {
                 const article = document.createElement('article');
                 article.className = 'note-item';
-                const created = n.createdAt ? new Date(n.createdAt.seconds ? n.createdAt.seconds * 1000 : n.createdAt).toLocaleString() : '';
+                const created = n.createdAt 
+                    ? new Date(n.createdAt.seconds ? n.createdAt.seconds * 1000 : n.createdAt).toLocaleString() 
+                    : 'Recent';
+
+                const ratingVal = Math.round(n.rating || n.overallRating || 0);
+
                 article.innerHTML = `
-                    <strong>${n.course || ''}</strong>
-                    <div class="note-rating">${'★'.repeat(n.rating || 0)}${'☆'.repeat(5 - (n.rating || 0))}</div>
-                    <div><em>Student:</em> ${n.student || ''}</div>
-                    <div class="note-meta">${created}</div>
-                    <p>${n.note || ''}</p>
+                    <div class="note-item-header">
+                        <strong>${n.lecturer || n.lecturerName || 'Lecturer'} — <span class="text-muted">${n.course || ''}</span></strong>
+                        <div class="note-rating">${'★'.repeat(ratingVal)}${'☆'.repeat(5 - ratingVal)}</div>
+                    </div>
+                    <div class="note-meta-row">
+                        <span><em>Student:</em> ${n.student || n.studentName || 'Anonymous'}</span>
+                        <span class="note-meta-date">${created}</span>
+                    </div>
+                    <p class="note-body-text">${n.note || n.comments || 'No written comment provided.'}</p>
                 `;
                 container.appendChild(article);
             });
@@ -90,10 +249,10 @@
 
             try {
                 const notes = await loadNotesFromFirestore();
-                renderNotes(notes);
-                showMessage('Showing Firestore notes.', 'success');
+                renderDashboard(notes);
+                showMessage('Dashboard updated with live Firestore data.', 'success');
             } catch (err) {
-                showMessage('Error loading notes: ' + (err.message || err), 'error');
+                showMessage('Error loading evaluation stats: ' + (err.message || err), 'error');
             }
         }
 
@@ -106,16 +265,18 @@
         });
 
         refreshBtn.addEventListener('click', async () => {
-            const notes = await loadNotesFromFirestore();
-            renderNotes(notes);
-            showMessage('Refreshed.', 'success');
+            try {
+                const notes = await loadNotesFromFirestore();
+                renderDashboard(notes);
+                showMessage('Refreshed data successfully.', 'success');
+            } catch (err) {
+                showMessage('Failed to refresh: ' + err.message, 'error');
+            }
         });
 
         clearBtn.addEventListener('click', () => {
-            // Clearing actual Firestore documents requires proper security rules and deletion code.
-            // For safety we only show guidance here.
-            if (!confirm('Clearing Firestore documents requires admin privileges and cannot be undone here. Continue?')) return;
-            showMessage('To clear notes, implement a secure server-side cleanup or use the Firebase console.', 'error');
+            if (!confirm('Clearing Firestore documents requires database management privileges. Continue?')) return;
+            showMessage('To clear notes from Firestore, use the Firebase Console or enable batch delete security rules.', 'error');
         });
     </script>
 </body>
