@@ -3,42 +3,43 @@ import { db } from "./firebase-config.js";
 
 const noteForm = document.getElementById("note-form");
 const notesList = document.getElementById("notes-list");
-const ratingInputs = document.querySelectorAll('input[name="rating"]');
 
-const updateRatingDisplay = () => {
-    const selectedValue = document.querySelector('input[name="rating"]:checked')?.value;
-    ratingInputs.forEach((input) => {
-        const label = document.querySelector(`label[for="${input.id}"]`);
-        if (label) {
-            label.classList.toggle("active", selectedValue && Number(input.value) <= Number(selectedValue));
-        }
-    });
-};
-
-ratingInputs.forEach((input) => {
-    input.addEventListener("change", updateRatingDisplay);
-});
+const getSelectedRating = (groupName) => Number(document.querySelector(`input[name="${groupName}"]:checked`)?.value || 0);
 
 if (noteForm) {
     noteForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const course = document.getElementById("course").value.trim();
-    const student = document.getElementById("student").value.trim();
-    const note = document.getElementById("note").value.trim();
-    const rating = Number(document.querySelector('input[name="rating"]:checked')?.value || 0);
+        event.preventDefault();
 
-    if (!course || !student || !note || !rating) return;
-    await addDoc(collection(db, "lecturerNotes"), {
-        course,
-        student,
-        note,
-        rating,
-        createdAt: new Date(),
+        const course = document.getElementById("course")?.value.trim();
+        const lecturer = document.getElementById("lecturer")?.value.trim();
+        const student = document.getElementById("student")?.value.trim();
+        const note = document.getElementById("note")?.value.trim();
+
+        const ratings = {
+            clarity: getSelectedRating("rating_clarity"),
+            behavior: getSelectedRating("rating_behavior"),
+            punctuality: getSelectedRating("rating_punctuality"),
+            material: getSelectedRating("rating_materials"),
+        };
+
+        const values = Object.values(ratings).filter((value) => value > 0);
+        const rating = values.length ? Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1)) : 0;
+
+        if (!course || !lecturer || !student || !note || values.length < 4) return;
+
+        await addDoc(collection(db, "lecturerNotes"), {
+            course,
+            lecturer,
+            student,
+            note,
+            rating,
+            overallRating: rating,
+            ratings,
+            createdAt: new Date(),
+        });
+
+        noteForm.reset();
     });
-
-    noteForm.reset();
-    updateRatingDisplay();
-});
 }
 
 const renderStars = (count) => {

@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdminEmail() {
+      return signedIn() && request.auth.token.email == 'admin@rui.com';
+    }
+
+    match /users/{userId} {
+      allow create, update, read: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /lecturerNotes/{noteId} {
+      allow create, read: if signedIn();
+      allow update, delete: if isAdminEmail();
+    }
+  }
+}

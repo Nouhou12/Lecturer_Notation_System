@@ -41,8 +41,15 @@
     </form>
 
     <script type="module">
-        import { auth } from './firebase-config.js';
+        import { auth, db } from './firebase-config.js';
         import { onAuthStateChanged, createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+        import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+
+        const ADMIN_EMAIL = 'admin@rui.com';
+
+        function isAdminEmail(email = '') {
+            return (email || '').toLowerCase() === ADMIN_EMAIL;
+        }
 
         document.addEventListener("DOMContentLoaded", function () {
             const signupForm = document.getElementById("signupForm");
@@ -57,7 +64,7 @@
                 if (!user) return;
 
                 localStorage.setItem("currentUser", user.email || "");
-                window.location.href = "home.html";
+                window.location.href = isAdminEmail((user.email || '').toLowerCase()) ? 'admin.html' : 'home.html';
             });
 
             signupForm.addEventListener("submit", function (event) {
@@ -74,13 +81,22 @@
                 }
 
                 createUserWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
+                    .then(async (userCredential) => {
                         const displayName = firstName + (lastName ? " " + lastName : "");
-                        return updateProfile(userCredential.user, { displayName }).then(() => {
-                            localStorage.setItem("currentUser", email);
-                            showMessage(signupMessage, "Account created successfully. Redirecting...", "success");
-                            setTimeout(() => window.location.href = "home.html", 700);
+                        const role = isAdminEmail(email) ? 'admin' : 'student';
+
+                        await updateProfile(userCredential.user, { displayName });
+                        await setDoc(doc(db, 'users', userCredential.user.uid), {
+                            uid: userCredential.user.uid,
+                            email: userCredential.user.email || '',
+                            displayName,
+                            role,
+                            createdAt: new Date(),
                         });
+
+                        localStorage.setItem("currentUser", email);
+                        showMessage(signupMessage, "Account created successfully. Redirecting...", "success");
+                        setTimeout(() => window.location.href = isAdminEmail(email) ? 'admin.html' : 'home.html', 700);
                     })
                     .catch((error) => {
                         showMessage(signupMessage, error.message || 'Signup failed', 'error');

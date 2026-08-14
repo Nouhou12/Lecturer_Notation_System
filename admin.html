@@ -63,7 +63,7 @@
     <script type="module">
         import { auth, db } from './firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
-        import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+        import { collection, doc, getDoc, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
 
         const msg = document.getElementById('adminMessage');
         const container = document.getElementById('notesContainer');
@@ -81,10 +81,17 @@
             msg.className = 'auth-message ' + (type || '');
         }
 
-        function currentUserIsAdmin(user) {
+        async function currentUserIsAdmin(user) {
             if (!user || !user.email) return false;
             const email = (user.email || '').toLowerCase();
-            return email === 'admin@rui.com' || email.endsWith('@rui.com');
+            if (email === 'admin@rui.com') return true;
+
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                return userDoc.exists() && (userDoc.data()?.role === 'admin');
+            } catch (error) {
+                return false;
+            }
         }
 
         async function loadNotesFromFirestore() {
@@ -241,7 +248,8 @@
         }
 
         async function initForUser(user) {
-            if (!currentUserIsAdmin(user)) {
+            const isAdmin = await currentUserIsAdmin(user);
+            if (!isAdmin) {
                 showMessage('Admin access required. Redirecting to login...', 'error');
                 setTimeout(() => window.location.href = 'login.html', 900);
                 return;

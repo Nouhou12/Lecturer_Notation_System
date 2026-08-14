@@ -29,8 +29,43 @@
     </form>
 
     <script type="module">
-        import { auth } from './firebase-config.js';
+        import { auth, db } from './firebase-config.js';
         import { onAuthStateChanged, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+        import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+
+        const ADMIN_EMAIL = 'admin@rui.com';
+
+        function isAdminEmail(email = '') {
+            return (email || '').toLowerCase() === ADMIN_EMAIL;
+        }
+
+        async function syncUserProfile(user) {
+            if (!user) return;
+
+            const userRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userRef);
+            const email = (user.email || '').toLowerCase();
+            const role = isAdminEmail(email) ? 'admin' : 'student';
+
+            if (!userDoc.exists()) {
+                await setDoc(userRef, {
+                    uid: user.uid,
+                    email: user.email || '',
+                    displayName: user.displayName || (user.email || '').split('@')[0],
+                    role,
+                    createdAt: new Date(),
+                });
+            } else {
+                await setDoc(userRef, {
+                    ...userDoc.data(),
+                    uid: user.uid,
+                    email: user.email || '',
+                    displayName: user.displayName || userDoc.data()?.displayName || (user.email || '').split('@')[0],
+                    role: userDoc.data()?.role ?? role,
+                    updatedAt: new Date(),
+                }, { merge: true });
+            }
+        }
 
         document.addEventListener("DOMContentLoaded", function () {
             const loginForm = document.getElementById("loginForm");
@@ -41,13 +76,15 @@
                 el.className = "auth-message " + (type || "");
             }
 
-            onAuthStateChanged(auth, (user) => {
+            onAuthStateChanged(auth, async (user) => {
                 if (!user) return;
 
+                await syncUserProfile(user);
                 localStorage.setItem("currentUser", user.email || "");
                 const userEmail = (user.email || "").toLowerCase();
-                const isAdmin = userEmail === "admin@rui.com" || userEmail.endsWith("@rui.com");
-                window.location.href = isAdmin ? "admin.html" : "home.html";
+                const isAdmin = isAdminEmail(userEmail);
+                const targetPage = isAdmin ? "admin.html" : "home.html";
+                window.location.href = targetPage;
             });
 
             loginForm.addEventListener("submit", function (event) {
@@ -56,12 +93,14 @@
                 const password = document.getElementById("loginPassword").value;
 
                 signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
+                    .then(async (userCredential) => {
+                        await syncUserProfile(userCredential.user);
                         localStorage.setItem("currentUser", userCredential.user.email || "");
                         showMessage(loginMessage, "Login successful. Redirecting...", "success");
                         const userEmail = (userCredential.user.email || "").toLowerCase();
-                        const isAdmin = userEmail === "admin@rui.com" || userEmail.endsWith("@rui.com");
-                        setTimeout(() => window.location.href = isAdmin ? "admin.html" : "home.html", 500);
+                        const isAdmin = isAdminEmail(userEmail);
+                        const targetPage = isAdmin ? "admin.html" : "home.html";
+                        setTimeout(() => window.location.href = targetPage, 500);
                     })
                     .catch((error) => {
                         showMessage(loginMessage, error.message || 'Login failed', 'error');
