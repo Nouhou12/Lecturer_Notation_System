@@ -30,7 +30,7 @@
 
     <script type="module">
         import { auth, db } from './firebase-config.js';
-        import { onAuthStateChanged, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+        import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
         import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
 
         const ADMIN_EMAIL = 'admin@rui.com';
@@ -65,6 +65,15 @@
                     updatedAt: new Date(),
                 }, { merge: true });
             }
+
+            // Store class in localStorage
+            const updatedDoc = await getDoc(userRef);
+            if (updatedDoc.exists()) {
+                const userClass = updatedDoc.data().class;
+                if (userClass) {
+                    localStorage.setItem("userClass", userClass);
+                }
+            }
         }
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -75,17 +84,6 @@
                 el.textContent = msg;
                 el.className = "auth-message " + (type || "");
             }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) return;
-
-                await syncUserProfile(user);
-                localStorage.setItem("currentUser", user.email || "");
-                const userEmail = (user.email || "").toLowerCase();
-                const isAdmin = isAdminEmail(userEmail);
-                const targetPage = isAdmin ? "admin.html" : "home.html";
-                window.location.href = targetPage;
-            });
 
             loginForm.addEventListener("submit", function (event) {
                 event.preventDefault();

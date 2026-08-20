@@ -36,6 +36,10 @@
             <p>Confirm Password</p>
             <input id="confirmPassword" type="password" name="confirmPassword" placeholder="Confirm your password" class="password" required>
         </div>
+        <div class="login-form">
+            <p>Class</p>
+            <input id="studentClass" type="text" name="class" placeholder="Enter your class (e.g., CS101, BIO202)" class="email" required>
+        </div>
         <button type="submit">Signup</button>
         <p id="signupMessage" class="auth-message"></p>
     </form>
@@ -74,6 +78,7 @@
                 const email = document.getElementById("signupEmail").value.trim().toLowerCase();
                 const password = document.getElementById("signupPassword").value;
                 const confirmPassword = document.getElementById("confirmPassword").value;
+                const studentClass = document.getElementById("studentClass").value.trim();
 
                 if (password !== confirmPassword) {
                     showMessage(signupMessage, "Passwords do not match.", "error");
@@ -91,10 +96,12 @@
                             email: userCredential.user.email || '',
                             displayName,
                             role,
+                            class: studentClass,
                             createdAt: new Date(),
                         });
 
                         localStorage.setItem("currentUser", email);
+                        localStorage.setItem("userClass", studentClass);
                         showMessage(signupMessage, "Account created successfully. Redirecting...", "success");
                         setTimeout(() => window.location.href = isAdminEmail(email) ? 'admin.html' : 'home.html', 700);
                     })

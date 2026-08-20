@@ -11,8 +11,6 @@ if (noteForm) {
         event.preventDefault();
 
         const course = document.getElementById("course")?.value.trim();
-        const lecturer = document.getElementById("lecturer")?.value.trim();
-        const student = document.getElementById("student")?.value.trim();
         const note = document.getElementById("note")?.value.trim();
 
         const ratings = {
@@ -25,20 +23,32 @@ if (noteForm) {
         const values = Object.values(ratings).filter((value) => value > 0);
         const rating = values.length ? Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1)) : 0;
 
-        if (!course || !lecturer || !student || !note || values.length < 4) return;
+        if (!course || !note || values.length < 4) return;
 
-        await addDoc(collection(db, "lecturerNotes"), {
-            course,
-            lecturer,
-            student,
-            note,
-            rating,
-            overallRating: rating,
-            ratings,
-            createdAt: new Date(),
-        });
+        // Get class from localStorage (set during login/signup)
+        const studentClass = localStorage.getItem("userClass");
 
-        noteForm.reset();
+        if (!studentClass) {
+            alert('Error: Your class information is not available. Please log out and log back in.');
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, "lecturerNotes"), {
+                course,
+                note,
+                rating,
+                overallRating: rating,
+                ratings,
+                class: studentClass,
+                createdAt: new Date(),
+            });
+            alert('Evaluation submitted successfully!');
+            noteForm.reset();
+        } catch (error) {
+            console.error('Error submitting evaluation:', error);
+            alert('Error submitting evaluation. Please try again.');
+        }
     });
 }
 
@@ -66,7 +76,6 @@ const renderNotes = (items) => {
         item.innerHTML = `
             <strong>${data.course}</strong>
             <div class="note-rating">${renderStars(data.rating || 0)}</div>
-            <div><em>Student:</em> ${data.student}</div>
             <p>${data.note}</p>
         `;
         notesList.appendChild(item);

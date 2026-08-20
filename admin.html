@@ -25,7 +25,7 @@
                 <span class="stat-value" id="totalSubmissions">0</span>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Lecturers Evaluated</span>
+                <span class="stat-label">Classes Evaluated</span>
                 <span class="stat-value" id="totalLecturers">0</span>
             </div>
             <div class="stat-card">
@@ -36,9 +36,9 @@
 
         <!-- Lecturer Aggregated Ratings Section -->
         <section class="admin-card">
-            <h2>Lecturer Performance & Averages</h2>
+            <h2>Class Performance & Course Evaluations</h2>
             <div id="analyticsContainer" class="analytics-grid">
-                <!-- Dynamically populated lecturer scorecards -->
+                <!-- Dynamically populated class scorecards -->
             </div>
         </section>
 
@@ -100,20 +100,21 @@
             return snap.docs.map(d => ({ id: d.id, ...d.data() }));
         }
 
-        // Generate Aggregate Analytics by Lecturer
-        function computeLecturerAnalytics(notes) {
+        // Generate Aggregate Analytics by Class
+        function computeClassAnalytics(notes) {
             const stats = {};
 
             notes.forEach(n => {
-                const lecturer = n.lecturer || n.lecturerName || 'Unassigned Lecturer';
+                const studentClass = n.class || 'Unknown Class';
                 const course = n.course || 'General Subject';
+                const classKey = studentClass;
 
-                if (!stats[lecturer]) {
-                    stats[lecturer] = {
-                        lecturerName: lecturer,
-                        course: course,
+                if (!stats[classKey]) {
+                    stats[classKey] = {
+                        className: studentClass,
                         count: 0,
                         totalOverall: 0,
+                        courses: {},
                         claritySum: 0,
                         behaviorSum: 0,
                         punctualitySum: 0,
@@ -122,12 +123,24 @@
                     };
                 }
 
-                const item = stats[lecturer];
-                item.count++;
+                const classItem = stats[classKey];
+                classItem.count++;
 
+                // Initialize course in this class if not exists
+                if (!classItem.courses[course]) {
+                    classItem.courses[course] = {
+                        courseName: course,
+                        count: 0,
+                        totalRating: 0
+                    };
+                }
+
+                classItem.courses[course].count++;
+                
                 // Overall score calculation
                 const overall = n.rating || n.overallRating || 0;
-                item.totalOverall += Number(overall);
+                classItem.totalOverall += Number(overall);
+                classItem.courses[course].totalRating += Number(overall);
 
                 // Multi-criteria parsing (if submitted via structured form)
                 const clarity = n.clarity || (n.ratings && n.ratings.clarity) || 0;
@@ -136,11 +149,11 @@
                 const material = n.material || (n.ratings && n.ratings.material) || 0;
 
                 if (clarity || behavior || punctuality || material) {
-                    item.hasCriteria = true;
-                    item.claritySum += Number(clarity);
-                    item.behaviorSum += Number(behavior);
-                    item.punctualitySum += Number(punctuality);
-                    item.materialSum += Number(material);
+                    classItem.hasCriteria = true;
+                    classItem.claritySum += Number(clarity);
+                    classItem.behaviorSum += Number(behavior);
+                    classItem.punctualitySum += Number(punctuality);
+                    classItem.materialSum += Number(material);
                 }
             });
 
@@ -150,7 +163,11 @@
                 avgClarity: s.hasCriteria ? (s.claritySum / s.count).toFixed(1) : null,
                 avgBehavior: s.hasCriteria ? (s.behaviorSum / s.count).toFixed(1) : null,
                 avgPunctuality: s.hasCriteria ? (s.punctualitySum / s.count).toFixed(1) : null,
-                avgMaterial: s.hasCriteria ? (s.materialSum / s.count).toFixed(1) : null
+                avgMaterial: s.hasCriteria ? (s.materialSum / s.count).toFixed(1) : null,
+                courses: Object.values(s.courses).map(c => ({
+                    ...c,
+                    avgRating: (c.totalRating / c.count).toFixed(1)
+                }))
             }));
         }
 
@@ -164,19 +181,30 @@
                 return;
             }
 
-            const lecturerStats = computeLecturerAnalytics(notes);
+            const classStats = computeClassAnalytics(notes);
 
             // 1. Render Top KPI Metrics
             totalSubmissionsEl.textContent = notes.length;
-            totalLecturersEl.textContent = lecturerStats.length;
-            const grandTotal = lecturerStats.reduce((acc, curr) => acc + Number(curr.avgOverall), 0);
-            systemAverageEl.textContent = `${(grandTotal / lecturerStats.length).toFixed(1)} / 5 ★`;
+            totalLecturersEl.textContent = classStats.length;
+            const grandTotal = classStats.reduce((acc, curr) => acc + Number(curr.avgOverall), 0);
+            systemAverageEl.textContent = `${(grandTotal / classStats.length).toFixed(1)} / 5 ★`;
 
-            // 2. Render Lecturer Scorecards
+            // 2. Render Class Scorecards
             analyticsContainer.innerHTML = '';
-            lecturerStats.forEach(stat => {
+            classStats.forEach(stat => {
                 const card = document.createElement('div');
                 card.className = 'lecturer-analytics-card';
+
+                let coursesHTML = '<div class="courses-list">';
+                stat.courses.forEach(course => {
+                    coursesHTML += `
+                        <div class="course-item">
+                            <span>${course.courseName}</span>
+                            <strong>${course.avgRating} / 5 ★</strong>
+                        </div>
+                    `;
+                });
+                coursesHTML += '</div>';
 
                 let criteriaHTML = '';
                 if (stat.hasCriteria) {
@@ -205,14 +233,14 @@
                 card.innerHTML = `
                     <div class="card-header-flex">
                         <div>
-                            <h3 class="lecturer-title">${stat.lecturerName}</h3>
-                            <span class="course-badge">${stat.course}</span>
+                            <h3 class="lecturer-title">${stat.className}</h3>
                         </div>
                         <div class="score-badge">
                             <span class="score-num">${stat.avgOverall}</span>
                             <span class="score-star">★</span>
                         </div>
                     </div>
+                    ${coursesHTML}
                     ${criteriaHTML}
                     <div class="card-footer-meta">
                         Based on ${stat.count} student evaluation${stat.count > 1 ? 's' : ''}
@@ -234,11 +262,10 @@
 
                 article.innerHTML = `
                     <div class="note-item-header">
-                        <strong>${n.lecturer || n.lecturerName || 'Lecturer'} — <span class="text-muted">${n.course || ''}</span></strong>
+                        <strong>${n.course || ''} — <span class="text-muted">${n.class || 'Unknown Class'}</span></strong>
                         <div class="note-rating">${'★'.repeat(ratingVal)}${'☆'.repeat(5 - ratingVal)}</div>
                     </div>
                     <div class="note-meta-row">
-                        <span><em>Student:</em> ${n.student || n.studentName || 'Anonymous'}</span>
                         <span class="note-meta-date">${created}</span>
                     </div>
                     <p class="note-body-text">${n.note || n.comments || 'No written comment provided.'}</p>
