@@ -1,5 +1,5 @@
-import { collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-import { db } from "./firebase-config.js";
+import { collection, addDoc, getDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
 
 const noteForm = document.getElementById("note-form");
 const notesList = document.getElementById("notes-list");
@@ -25,15 +25,21 @@ if (noteForm) {
 
         if (!course || !note || values.length < 4) return;
 
-        // Get class from localStorage (set during login/signup)
-        const studentClass = localStorage.getItem("userClass");
-
-        if (!studentClass) {
-            alert('Error: Your class information is not available. Please log out and log back in.');
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            alert('Error: You must be logged in to submit an evaluation.');
             return;
         }
 
         try {
+            const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+            const studentClass = userDoc.exists() ? userDoc.data().class?.trim() : "";
+
+            if (!studentClass) {
+                alert('Error: Your class information is not available in your user profile.');
+                return;
+            }
+
             await addDoc(collection(db, "lecturerNotes"), {
                 course,
                 note,
