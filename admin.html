@@ -52,6 +52,37 @@
                 </div>
             </div>
             <p id="adminMessage" class="auth-message"></p>
+            <div class="admin-filters" aria-label="Filter evaluations">
+                <label>
+                    Search
+                    <input id="searchFilter" type="search" placeholder="Course, class, or comment" />
+                </label>
+                <label>
+                    Class
+                    <select id="classFilter">
+                        <option value="">All classes</option>
+                    </select>
+                </label>
+                <label>
+                    Course
+                    <select id="courseFilter">
+                        <option value="">All courses</option>
+                    </select>
+                </label>
+                <label>
+                    Minimum rating
+                    <select id="ratingFilter">
+                        <option value="0">Any rating</option>
+                        <option value="1">1+ stars</option>
+                        <option value="2">2+ stars</option>
+                        <option value="3">3+ stars</option>
+                        <option value="4">4+ stars</option>
+                        <option value="5">5 stars</option>
+                    </select>
+                </label>
+                <button id="resetFiltersBtn" class="btn-outline" type="button">Reset filters</button>
+            </div>
+            <p id="filterSummary" class="filter-summary"></p>
             <div id="notesContainer" class="notes-feed"></div>
         </section>
     </main>
@@ -70,6 +101,13 @@
         const analyticsContainer = document.getElementById('analyticsContainer');
         const refreshBtn = document.getElementById('refreshBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const searchFilter = document.getElementById('searchFilter');
+        const classFilter = document.getElementById('classFilter');
+        const courseFilter = document.getElementById('courseFilter');
+        const ratingFilter = document.getElementById('ratingFilter');
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+        const filterSummary = document.getElementById('filterSummary');
+        let allNotes = [];
 
         // Stats Elements
         const totalSubmissionsEl = document.getElementById('totalSubmissions');
@@ -98,6 +136,47 @@
             const q = query(collection(db, 'lecturerNotes'), orderBy('createdAt', 'desc'));
             const snap = await getDocs(q);
             return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+
+        function getRating(note) {
+            return Number(note.rating || note.overallRating || 0);
+        }
+
+        function populateFilterOptions(notes) {
+            const values = (key) => [...new Set(notes.map(note => note[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
+            const addOptions = (select, options) => {
+                select.innerHTML = `<option value="">All ${select === classFilter ? 'classes' : 'courses'}</option>`;
+                options.forEach(option => {
+                    const element = document.createElement('option');
+                    element.value = option;
+                    element.textContent = option;
+                    select.appendChild(element);
+                });
+            };
+
+            addOptions(classFilter, values('class'));
+            addOptions(courseFilter, values('course'));
+        }
+
+        function getFilteredNotes() {
+            const search = searchFilter.value.trim().toLowerCase();
+            const minimumRating = Number(ratingFilter.value);
+
+            return allNotes.filter(note => {
+                const searchableText = [note.course, note.class, note.note, note.comments].filter(Boolean).join(' ').toLowerCase();
+                return (!search || searchableText.includes(search))
+                    && (!classFilter.value || note.class === classFilter.value)
+                    && (!courseFilter.value || note.course === courseFilter.value)
+                    && getRating(note) >= minimumRating;
+            });
+        }
+
+        function applyFilters() {
+            const filteredNotes = getFilteredNotes();
+            renderDashboard(filteredNotes);
+            filterSummary.textContent = allNotes.length && filteredNotes.length !== allNotes.length
+                ? `Showing ${filteredNotes.length} of ${allNotes.length} evaluations.`
+                : '';
         }
 
         // Generate Aggregate Analytics by Class
@@ -283,8 +362,9 @@
             }
 
             try {
-                const notes = await loadNotesFromFirestore();
-                renderDashboard(notes);
+                allNotes = await loadNotesFromFirestore();
+                populateFilterOptions(allNotes);
+                applyFilters();
                 showMessage('Dashboard updated with live Firestore data.', 'success');
             } catch (err) {
                 showMessage('Error loading evaluation stats: ' + (err.message || err), 'error');
@@ -301,12 +381,26 @@
 
         refreshBtn.addEventListener('click', async () => {
             try {
-                const notes = await loadNotesFromFirestore();
-                renderDashboard(notes);
+                allNotes = await loadNotesFromFirestore();
+                populateFilterOptions(allNotes);
+                applyFilters();
                 showMessage('Refreshed data successfully.', 'success');
             } catch (err) {
                 showMessage('Failed to refresh: ' + err.message, 'error');
             }
+        });
+
+        [searchFilter, classFilter, courseFilter, ratingFilter].forEach(filter => {
+            filter.addEventListener('input', applyFilters);
+            filter.addEventListener('change', applyFilters);
+        });
+
+        resetFiltersBtn.addEventListener('click', () => {
+            searchFilter.value = '';
+            classFilter.value = '';
+            courseFilter.value = '';
+            ratingFilter.value = '0';
+            applyFilters();
         });
 
         clearBtn.addEventListener('click', () => {

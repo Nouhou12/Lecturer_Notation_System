@@ -58,6 +58,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             const signupForm = document.getElementById("signupForm");
             const signupMessage = document.getElementById("signupMessage");
+            let signupInProgress = false;
 
             function showMessage(el, msg, type) {
                 el.textContent = msg;
@@ -65,7 +66,7 @@
             }
 
             onAuthStateChanged(auth, (user) => {
-                if (!user) return;
+                if (!user || signupInProgress) return;
 
                 localStorage.setItem("currentUser", user.email || "");
                 window.location.href = isAdminEmail((user.email || '').toLowerCase()) ? 'admin.html' : 'home.html';
@@ -85,6 +86,7 @@
                     return;
                 }
 
+                signupInProgress = true;
                 createUserWithEmailAndPassword(auth, email, password)
                     .then(async (userCredential) => {
                         const displayName = firstName + (lastName ? " " + lastName : "");
