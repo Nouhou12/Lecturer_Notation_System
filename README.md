@@ -17,8 +17,8 @@ The Lecturer Notation System is a lightweight web-based application that allows 
 - Progressive Web App (PWA) support
 
 ## Project Structure
-- index.html — main page for submitting lecturer reviews
-- home.html — home page for signed-in users
+- index.html — home page for signed-in users
+- notation.html — page for submitting lecturer reviews
 - login.html — login page
 - signup.html — registration page
 - admin.html — admin page for viewing submitted reviews

@@ -1,126 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lecturer Notation PWA</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0b3d91" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lecturer Notation PWA</title>
+    <link rel="icon" type="image/x-icon" href="/RUI.png" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0b3d91" />
 </head>
 <body>
-  <main class="app-main">
-    <section class="form-card">
-      <h2>Evaluate a Lecturer</h2>
-      <form id="note-form" class="form_container">
-        
-        <!-- Course Selection -->
-        <label for="course">
-          Course
-          <select id="course" name="course" required>
-            <option value="" disabled selected>Select a course</option>
-            <option value="Mathematics">Mathematics</option>
-            <option value="Physics">Physics</option>
-            <option value="Chemistry">Chemistry</option>
-            <option value="Computer Science">Computer Science</option>
-            <option value="Biology">Biology</option>
-            <option value="History">History</option>
-          </select>
-        </label>
+    <header class="app-header">
+        <h1 id="appTitle">Lecturer Notation</h1>
+        <p id="welcomeText">Capture student notes and feedback from any device.</p>
+        <nav class="top-nav">
+            <a href="index.html">Home</a>
+            <a href="notation.html">Add Note</a>
+            <a href="login.html">Login</a>
+            <a href="signup.html">Signup</a>
+            <button id="logoutBtn" class="logout-btn" style="display:none;">Logout</button>
+        </nav>
+    </header>
 
-        <!-- MULTI-CRITERIA RATING SECTION -->
-        <div class="evaluation-grid">
+    <main class="app-main">
+        <section class="welcome-card">
+            <h2 id="welcomeName">Welcome</h2>
+            <p id="welcomeDesc">View your notes or add a new one.</p>
+        </section>
+    </main>
 
-          <!-- 1. Teaching & Pedagogy -->
-          <fieldset class="rating-fieldset">
-            <legend>Teaching Clarity & Pedagogy</legend>
-            <div class="rating-group">
-              <input type="radio" name="rating_clarity" id="clarity-5" value="5" required />
-              <label for="clarity-5" title="5 stars">★</label>
-              <input type="radio" name="rating_clarity" id="clarity-4" value="4" />
-              <label for="clarity-4" title="4 stars">★</label>
-              <input type="radio" name="rating_clarity" id="clarity-3" value="3" />
-              <label for="clarity-3" title="3 stars">★</label>
-              <input type="radio" name="rating_clarity" id="clarity-2" value="2" />
-              <label for="clarity-2" title="2 stars">★</label>
-              <input type="radio" name="rating_clarity" id="clarity-1" value="1" />
-              <label for="clarity-1" title="1 star">★</label>
-            </div>
-          </fieldset>
+    <footer class="site-footer">
+        <p>&copy; Rousseau University Institute - Learn, Create and Innovate</p>
+    </footer>
 
-          <!-- 2. Behavior & Professionalism -->
-          <fieldset class="rating-fieldset">
-            <legend>Behavior & Professionalism</legend>
-            <div class="rating-group">
-              <input type="radio" name="rating_behavior" id="behavior-5" value="5" required />
-              <label for="behavior-5" title="5 stars">★</label>
-              <input type="radio" name="rating_behavior" id="behavior-4" value="4" />
-              <label for="behavior-4" title="4 stars">★</label>
-              <input type="radio" name="rating_behavior" id="behavior-3" value="3" />
-              <label for="behavior-3" title="3 stars">★</label>
-              <input type="radio" name="rating_behavior" id="behavior-2" value="2" />
-              <label for="behavior-2" title="2 stars">★</label>
-              <input type="radio" name="rating_behavior" id="behavior-1" value="1" />
-              <label for="behavior-1" title="1 star">★</label>
-            </div>
-          </fieldset>
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
 
-          <!-- 3. Punctuality & Availability -->
-          <fieldset class="rating-fieldset">
-            <legend>Punctuality & Availability</legend>
-            <div class="rating-group">
-              <input type="radio" name="rating_punctuality" id="punctuality-5" value="5" required />
-              <label for="punctuality-5" title="5 stars">★</label>
-              <input type="radio" name="rating_punctuality" id="punctuality-4" value="4" />
-              <label for="punctuality-4" title="4 stars">★</label>
-              <input type="radio" name="rating_punctuality" id="punctuality-3" value="3" />
-              <label for="punctuality-3" title="3 stars">★</label>
-              <input type="radio" name="rating_punctuality" id="punctuality-2" value="2" />
-              <label for="punctuality-2" title="2 stars">★</label>
-              <input type="radio" name="rating_punctuality" id="punctuality-1" value="1" />
-              <label for="punctuality-1" title="1 star">★</label>
-            </div>
-          </fieldset>
+        const logoutBtn = document.getElementById('logoutBtn');
+        const welcomeName = document.getElementById('welcomeName');
+        const welcomeDesc = document.getElementById('welcomeDesc');
 
-          <!-- 4. Course Organization -->
-          <fieldset class="rating-fieldset">
-            <legend>Course Material & Organization</legend>
-            <div class="rating-group">
-              <input type="radio" name="rating_materials" id="materials-5" value="5" required />
-              <label for="materials-5" title="5 stars">★</label>
-              <input type="radio" name="rating_materials" id="materials-4" value="4" />
-              <label for="materials-4" title="4 stars">★</label>
-              <input type="radio" name="rating_materials" id="materials-3" value="3" />
-              <label for="materials-3" title="3 stars">★</label>
-              <input type="radio" name="rating_materials" id="materials-2" value="2" />
-              <label for="materials-2" title="2 stars">★</label>
-              <input type="radio" name="rating_materials" id="materials-1" value="1" />
-              <label for="materials-1" title="1 star">★</label>
-            </div>
-          </fieldset>
+        function updateWelcome(user) {
+            if (!user) {
+                welcomeName.textContent = 'Welcome';
+                welcomeDesc.textContent = 'Sign in to access your account, or browse the available pages.';
+                logoutBtn.style.display = 'none';
+                return;
+            }
 
-        </div>
+            const email = user.email || '';
+            localStorage.setItem('currentUser', email);
+            const displayName = user.displayName || email.split('@')[0] || 'User';
+            welcomeName.textContent = 'Welcome, ' + displayName;
+            welcomeDesc.textContent = 'You are signed in as ' + email;
+            logoutBtn.style.display = 'inline-block';
+        }
 
-        <!-- Detailed Feedback -->
-        <label for="note">
-          Detailed Comments / Recommendations
-          <textarea id="note" name="note" placeholder="Provide constructive feedback or specific details..." rows="4"></textarea>
-        </label>
+        logoutBtn.addEventListener('click', async function () {
+            try {
+                await signOut(auth);
+            } finally {
+                localStorage.removeItem('currentUser');
+            }
+        });
 
-        <button type="submit">Submit Evaluation</button>
-      </form>
-    </section>
-
-    <section class="notes-card">
-      <h2>Recent Evaluations</h2>
-      <div id="notes-list"></div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <p>&copy; Rousseau University Institute - Learn, Create and Innovate</p>
-  </footer>
-
-  <script type="module" src="app.js"></script>
+        onAuthStateChanged(auth, (user) => {
+            updateWelcome(user);
+        });
+    </script>
 </body>
 </html>

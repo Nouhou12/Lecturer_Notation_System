@@ -38,7 +38,24 @@
         </div>
         <div class="login-form">
             <p>Class</p>
-            <input id="studentClass" type="text" name="class" placeholder="Enter your class (e.g., CS101, BIO202)" class="email" required>
+            <select id="studentClass" name="class" class="email" required>
+                <option value="" disabled selected>Select your class</option>
+                <option value="PREPA 2">PREPA 2</option>
+                <option value="MECHATRONIC 2">MECHATRONIC 2</option>
+                <option value="SOFTWARE 2">SOFTWARE 2</option>
+                <option value="NETWORK 2">NETWORK 2</option>
+                <option value="SOFTWARE 3">SOFTWARE 3</option>
+                <option value="CIVIL 2">CIVIL 2</option>
+                <option value="CIVIL 3">CIVIL 3</option>
+                <option value="ACCOUNTING 2">ACCOUNTING 2</option>
+                <option value="PROJECT MANAGEMENT 2">PROJECT MANAGEMENT 2</option>
+                <option value="BUSINESS MANAGEMENT 2">BUSINESS MANAGEMENT 2</option>
+                <option value="BUSINESS MANAGEMENT 3">BUSINESS MANAGEMENT 3</option>
+                <option value="TOP UP PROJECT MGT">TOP UP PROJECT MGT</option>
+                <option value="LEGAL CAREER 2">LEGAL CAREER 2</option>
+                <option value="HEALTH SCIENCES 2">HEALTH SCIENCES 2</option>
+                <option value="HEALTH SCIENCES 3">HEALTH SCIENCES 3</option>
+            </select>
         </div>
         <button type="submit">Signup</button>
         <p id="signupMessage" class="auth-message"></p>
@@ -46,7 +63,7 @@
 
     <script type="module">
         import { auth, db } from './firebase-config.js';
-        import { onAuthStateChanged, createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+        import { createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
         import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
 
         const ADMIN_EMAIL = 'admin@rui.com';
@@ -58,19 +75,11 @@
         document.addEventListener("DOMContentLoaded", function () {
             const signupForm = document.getElementById("signupForm");
             const signupMessage = document.getElementById("signupMessage");
-            let signupInProgress = false;
 
             function showMessage(el, msg, type) {
                 el.textContent = msg;
                 el.className = "auth-message " + (type || "");
             }
-
-            onAuthStateChanged(auth, (user) => {
-                if (!user || signupInProgress) return;
-
-                localStorage.setItem("currentUser", user.email || "");
-                window.location.href = isAdminEmail((user.email || '').toLowerCase()) ? 'admin.html' : 'home.html';
-            });
 
             signupForm.addEventListener("submit", function (event) {
                 event.preventDefault();
@@ -86,7 +95,6 @@
                     return;
                 }
 
-                signupInProgress = true;
                 createUserWithEmailAndPassword(auth, email, password)
                     .then(async (userCredential) => {
                         const displayName = firstName + (lastName ? " " + lastName : "");
@@ -105,7 +113,8 @@
                         localStorage.setItem("currentUser", email);
                         localStorage.setItem("userClass", studentClass);
                         showMessage(signupMessage, "Account created successfully. Redirecting...", "success");
-                        setTimeout(() => window.location.href = isAdminEmail(email) ? 'admin.html' : 'home.html', 700);
+                        const targetPage = isAdminEmail(email) ? 'admin.html' : 'index.html';
+                        setTimeout(() => window.location.href = targetPage, 700);
                     })
                     .catch((error) => {
                         showMessage(signupMessage, error.message || 'Signup failed', 'error');

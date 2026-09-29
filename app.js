@@ -1,8 +1,38 @@
 import { collection, addDoc, getDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { auth, db } from "./firebase-config.js";
+import { getClassCourses } from "./class-courses.js";
 
 const noteForm = document.getElementById("note-form");
 const notesList = document.getElementById("notes-list");
+const courseSelect = document.getElementById("course");
+
+function populateCourses(courses, emptyMessage) {
+    if (!courseSelect) return;
+
+    courseSelect.replaceChildren(new Option(emptyMessage, "", true, true));
+    courseSelect.options[0].disabled = true;
+    courses.forEach((course) => courseSelect.add(new Option(course, course)));
+}
+
+if (courseSelect) {
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            populateCourses([], "Sign in to load your subjects");
+            return;
+        }
+
+        try {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            const studentClass = userDoc.exists() ? userDoc.data().class || "" : "";
+            const courses = getClassCourses(studentClass);
+            populateCourses(courses, courses.length ? "Select a subject" : "No subjects found for your class");
+        } catch (error) {
+            console.error("Error loading class subjects:", error);
+            populateCourses([], "Unable to load your subjects");
+        }
+    });
+}
 
 const getSelectedRating = (groupName) => Number(document.querySelector(`input[name="${groupName}"]:checked`)?.value || 0);
 

@@ -11,8 +11,8 @@
         <h1>Admin Analytics & Notes</h1>
         <p>Lecturer evaluation averages and student feedback overview.</p>
         <nav class="top-nav">
-            <a href="home.html">Home</a>
-            <a href="index.html">Add Evaluation</a>
+            <a href="index.html">Home</a>
+            <a href="notation.html">Add Evaluation</a>
             <a href="login.html">Login</a>
         </nav>
     </header>
@@ -356,8 +356,7 @@
         async function initForUser(user) {
             const isAdmin = await currentUserIsAdmin(user);
             if (!isAdmin) {
-                showMessage('Admin access required. Redirecting to login...', 'error');
-                setTimeout(() => window.location.href = 'login.html', 900);
+                showMessage('Admin access required. Sign in with an administrator account to view this dashboard.', 'error');
                 return;
             }
 
@@ -374,8 +373,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user) initForUser(user);
             else {
-                showMessage('Not signed in. Redirecting to login...', 'error');
-                setTimeout(() => window.location.href = 'login.html', 700);
+                showMessage('Not signed in. Sign in to view the admin dashboard.', 'error');
             }
         });
 

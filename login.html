@@ -95,9 +95,7 @@
                         await syncUserProfile(userCredential.user);
                         localStorage.setItem("currentUser", userCredential.user.email || "");
                         showMessage(loginMessage, "Login successful. Redirecting...", "success");
-                        const userEmail = (userCredential.user.email || "").toLowerCase();
-                        const isAdmin = isAdminEmail(userEmail);
-                        const targetPage = isAdmin ? "admin.html" : "home.html";
+                        const targetPage = isAdminEmail(userCredential.user.email || "") ? "admin.html" : "index.html";
                         setTimeout(() => window.location.href = targetPage, 500);
                     })
                     .catch((error) => {

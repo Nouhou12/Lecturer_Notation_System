@@ -28,7 +28,7 @@ body {
 }
 
 /* ==========================================================================
-   2. TOP HEADER BANNER (HOME.HTML & APP HEADERS)
+  2. TOP HEADER BANNER (INDEX.HTML & APP HEADERS)
    ========================================================================== */
 header, .app-header, .home-header, .header {
   width: 100%;
@@ -175,10 +175,10 @@ form.login, .login {
 }
 
 /* ==========================================================================
-   5. EVALUATION FORM & RATING SYSTEM (INDEX.HTML)
+  5. EVALUATION FORM & RATING SYSTEM (NOTATION.HTML)
    ========================================================================== */
 /* ==========================================================================
-   5. EVALUATION FORM & RATING SYSTEM (INDEX.HTML)
+  5. EVALUATION FORM & RATING SYSTEM (NOTATION.HTML)
    ========================================================================== */
 #note-form, form.evaluation-form {
   display: flex;
