@@ -1,4 +1,4 @@
-import { collection, addDoc, getDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { collection, addDoc, getDoc, getDocs, doc, onSnapshot, query, orderBy, updateDoc, where } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { auth, db } from "./firebase-config.js";
 import { getClassCourses } from "./class-courses.js";
@@ -6,6 +6,7 @@ import { getClassCourses } from "./class-courses.js";
 const noteForm = document.getElementById("note-form");
 const notesList = document.getElementById("notes-list");
 const courseSelect = document.getElementById("course");
+const submissionState = { editingId: null };
 
 function populateCourses(courses, emptyMessage) {
     if (!courseSelect) return;
@@ -19,6 +20,7 @@ if (courseSelect) {
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
             populateCourses([], "Sign in to load your subjects");
+            submissionState.editingId = null;
             return;
         }
 
@@ -27,6 +29,31 @@ if (courseSelect) {
             const studentClass = userDoc.exists() ? userDoc.data().class || "" : "";
             const courses = getClassCourses(studentClass);
             populateCourses(courses, courses.length ? "Select a subject" : "No subjects found for your class");
+
+            const submittedNoteSnapshot = await getDocs(query(collection(db, "lecturerNotes"), where("uid", "==", user.uid)));
+            if (!submittedNoteSnapshot.empty) {
+                const existingNote = submittedNoteSnapshot.docs[0];
+                const data = existingNote.data();
+                submissionState.editingId = existingNote.id;
+                const noteField = document.getElementById("note");
+                const submitButton = noteForm?.querySelector('button[type="submit"]');
+
+                if (courseSelect) courseSelect.value = data.course || "";
+                if (noteField) noteField.value = data.note || "";
+
+                Object.entries(data.ratings || {}).forEach(([key, value]) => {
+                    const radio = document.querySelector(`input[name="rating_${key}"][value="${value}"]`);
+                    if (radio) radio.checked = true;
+                });
+
+                if (submitButton) submitButton.textContent = "Update Evaluation";
+            } else {
+                submissionState.editingId = null;
+                if (noteForm) {
+                    const submitButton = noteForm.querySelector('button[type="submit"]');
+                    if (submitButton) submitButton.textContent = "Submit Evaluation";
+                }
+            }
         } catch (error) {
             console.error("Error loading class subjects:", error);
             populateCourses([], "Unable to load your subjects");
@@ -63,14 +90,40 @@ if (noteForm) {
 
         try {
             const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+            const role = userDoc.exists() ? userDoc.data().role : "";
             const studentClass = userDoc.exists() ? userDoc.data().class?.trim() : "";
+
+            if (role === "admin") {
+                alert('Admin accounts cannot submit student evaluations.');
+                return;
+            }
 
             if (!studentClass) {
                 alert('Error: Your class information is not available in your user profile.');
                 return;
             }
 
+            const existingNoteQuery = query(collection(db, "lecturerNotes"), where("uid", "==", currentUser.uid));
+            const existingNoteSnapshot = await getDocs(existingNoteQuery);
+
+            if (submissionState.editingId || !existingNoteSnapshot.empty) {
+                const noteId = submissionState.editingId || existingNoteSnapshot.docs[0].id;
+                await updateDoc(doc(db, "lecturerNotes", noteId), {
+                    uid: currentUser.uid,
+                    course,
+                    note,
+                    rating,
+                    overallRating: rating,
+                    ratings,
+                    class: studentClass,
+                    updatedAt: new Date(),
+                });
+                alert('Evaluation updated successfully!');
+                return;
+            }
+
             await addDoc(collection(db, "lecturerNotes"), {
+                uid: currentUser.uid,
                 course,
                 note,
                 rating,
